@@ -1,0 +1,87 @@
+/* ============================================================================
+   Cor · Chapa 3 Marcão + Ciel
+   ============================================================================
+   Os valores saem do próprio símbolo da campanha (`detalhes/assets/logo.png`)
+   e da arte de capa: azul institucional, âmbar e o azul-céu do único
+   triângulo que destoa. A engenharia reversa §3 não conseguiu verificar cor
+   nenhuma no site publicado — o Wix injeta o CSS em execução — e mandava
+   justamente ler a paleta no símbolo. É o que está aqui.
+
+   Dois temas compostos, nunca um interruptor: a página alterna blocos Sigilo
+   (azul institucional) e blocos Cartaz (papel), e a troca acontece no limite
+   da seção, em corte. O tema mora na SEÇÃO (`data-theme="cartaz"`), nunca na
+   raiz, e não segue `prefers-color-scheme`.
+
+   Proporção: 85% neutro · 12% osso e prata · 3% acento. Um acento por tela.
+   ========================================================================== */
+
+:root {
+  /* ---- Modo Sigilo (azul institucional · padrão) ------------------------- */
+  --void: #072b57;         /* fundo global — o azul da faixa da capa */
+  --surface-1: #0b3568;    /* painéis e blocos */
+  --surface-2: #114379;    /* chips, zebrado, capa de card */
+  --line: #1b4d8c;         /* fios, molduras, divisores */
+  --line-strong: #3a72b5;  /* fio em foco / borda ativa */
+  --silver: #a9c9ea;       /* texto secundário · 8,20:1 */
+  --bone: #f2f7fc;         /* texto primário · 13,06:1 */
+  --bone-pure: #ffffff;    /* só número de placar */
+
+  /* ---- Acentos da identidade --------------------------------------------
+     Âmbar é a cor de sete dos oito triângulos; o céu é o oitavo. Um por
+     superfície, nunca os dois na mesma. */
+  --ambar: #f5b800;   /* 7,87:1 sobre --void */
+  --ceu: #4fb3eb;     /* 6,02:1 sobre --void */
+
+  --success: #35c46a;
+  --warning: #f5b800;
+  --danger: #ff6b6b;
+
+  /* O acento do contexto. Trocado por bloco de compromisso: VALORIZAR carrega
+     âmbar, SIMPLIFICAR carrega céu, AVANÇAR carrega osso — e cada um também
+     muda de preenchimento, porque cor nunca comunica sozinha. */
+  --acento: var(--ambar);
+}
+
+/* ---- Modo Cartaz (papel) ---------------------------------------------------
+   Não é inversão de conveniência: é a mesma identidade impressa. Os mesmos
+   nomes de token, remapeados. O site de origem é essencialmente uma coleção
+   de listas longas, e lista longa se lê no claro. */
+[data-theme="cartaz"] {
+  --void: #f4f6f9;
+  --surface-1: #ffffff;
+  --surface-2: #e6ebf1;
+  --line: #c3ccd8;
+  --line-strong: #93a3b5;
+  --silver: #4a5c72;       /* 6,33:1 */
+  --bone: #08284f;         /* 13,60:1 — a tinta é o próprio azul da marca */
+  --bone-pure: #041a35;
+
+  /* Âmbar puro sobre papel é ilegível como texto: no Cartaz ele vira área
+     (fundo) e a versão de TINTA escurece. O céu segue a mesma regra. */
+  --ambar: #8a5e00;        /* 5,27:1 */
+  --ambar-area: #f5b800;   /* mantido para preenchimento */
+  --ceu: #1063a0;          /* 5,85:1 */
+  --ceu-area: #4fb3eb;
+
+  --success: #157a3f;
+  --warning: #8a5e00;
+  --danger: #b3151f;
+
+  /* Sem esta linha o acento fica preso no âmbar do Sigilo: substituição de
+     custom property resolve no elemento onde foi declarada. */
+  --acento: var(--ambar);
+}
+
+:root {
+  --ambar-area: var(--ambar);
+  --ceu-area: var(--ceu);
+}
+
+/* ---- Acento por bloco -----------------------------------------------------
+   Os três verbos têm cor fixa nas quatro páginas (RE §3: "cor como
+   argumento"). Reconhecer o sistema sem precisar lê-lo de novo é o efeito. */
+[data-acento="ambar"] { --acento: var(--ambar); --acento-area: var(--ambar-area); }
+[data-acento="ceu"]   { --acento: var(--ceu);   --acento-area: var(--ceu-area); }
+[data-acento="osso"]  { --acento: var(--bone);  --acento-area: var(--bone); }
+
+:root { --acento-area: var(--ambar-area); }

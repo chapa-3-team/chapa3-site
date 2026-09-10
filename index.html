@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <!-- Os quatro campos abaixo são reescritos por rota em scripts/prerender.mjs. -->
+    <title>Chapa 3 · Marcão + Ciel · Reitoria FURB</title>
+    <meta name="description" content="União e Gestão com Responsabilidade. Os três pilares, os três compromissos e o método de cinco etapas da Chapa 3 para uma FURB mais conectada, simples e humana." />
+    <link rel="canonical" href="/" />
+    <meta property="og:url" content="/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Chapa 3 · Marcão + Ciel" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="Chapa 3 · Marcão + Ciel · Reitoria FURB" />
+    <meta property="og:description" content="União e Gestão com Responsabilidade. Uma FURB mais conectada, simples e humana." />
+    <meta property="og:image" content="/img/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Marcão e Ciel, Chapa 3 à Reitoria da FURB: União e Gestão com Responsabilidade." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chapa 3 · Marcão + Ciel · Reitoria FURB" />
+    <meta name="twitter:description" content="União e Gestão com Responsabilidade. Uma FURB mais conectada, simples e humana." />
+    <meta name="twitter:image" content="/img/og.jpg" />
+
+    <meta name="theme-color" content="#072b57" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- Fontes locais, sem CDN em execução. O preload é só das duas famílias
+         que compõem a primeira tela. -->
+    <link
+      rel="preload"
+      href="/fonts/big-shoulders-display-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/ibm-plex-sans-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+  <body>
+    <div id="raiz"><!--app-html--></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

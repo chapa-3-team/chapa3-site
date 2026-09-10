@@ -1,0 +1,32 @@
+/* ============================================================================
+   SIGILO · Movimento
+   Vibe: engenharia reversa Chapa 3 (Wix) + Click.Jr (nexxus) — um vocabulário
+   só, contínuo (ease-out/expo-out). Nenhum dos dois documentos-alvo usa corte
+   em degraus; a curva expo-out do Lenis (motion/index.js) vale pra tudo:
+   reveal de bloco, cascata e carimbo.
+   ========================================================================== */
+
+:root {
+  --motion-fast: 120ms;   /* estados de botão, marcadores */
+  --motion-base: 180ms;   /* entrada de cards, troca de aba */
+  --motion-slow: 280ms;   /* painéis, diálogos, esqueletos */
+
+  /* Celebração de recorde e meta batida. */
+  --motion-celebracao: 320ms;
+
+  --ease-default: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Motion nunca comunica sozinho. Com prefers-reduced-motion, tudo vira
+   opacidade — regra literal de §10. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-property: opacity !important;
+    transition-duration: var(--motion-fast) !important;
+    scroll-behavior: auto !important;
+  }
+}

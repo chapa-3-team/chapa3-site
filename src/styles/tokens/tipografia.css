@@ -1,0 +1,184 @@
+/* ============================================================================
+   SIGILO · Tipografia
+   Vibe: engenharia reversa Chapa 3 (Wix) + Click.Jr (nexxus) — duas
+   grotescas, sem serifa editorial e sem peso estendido pesado. Ver
+   detalhes/Referências/.
+
+   Marca e Principal reusam a família de Display: nada de gótico/blackletter,
+   o logotipo assina com o mesmo corte condensado dos títulos.
+   ========================================================================== */
+
+:root {
+  /* ---- Famílias -------------------------------------------------------- */
+  --font-marca:      "Archivo", "Arial Narrow", sans-serif;
+  --font-principal:  "Archivo", "Arial Narrow", sans-serif;
+  --font-secundaria: "Archivo", "Arial Narrow", sans-serif;
+  --font-terciaria:  "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ---- Pesos ------------------------------------------------------------- */
+  --peso-regular: 400;
+  --peso-medio: 500;
+  --peso-semi: 600;
+  --peso-bold: 700;
+  --peso-black: 800;
+
+  /* ---- Travas de tamanho mínimo — §3.1.1, §3.2, §3.4 ---------------------
+     Abaixo destes valores a peça reprova: o traço da Marca colapsa e o corpo
+     deixa de ser legível. */
+  --min-marca: 32px;
+  --min-principal: 28px;
+  --min-corpo: 16px;
+
+  /* ---- Medida de linha — §3.4 -------------------------------------------- */
+  --medida-max: 65ch;
+}
+
+/* ============================================================================
+   Escala canônica — §3.8
+   Os nomes de classe abaixo são os nomes de token da tabela §3.8, sem tradução
+   e sem prefixo inventado. Use-os; não crie um sexto tamanho.
+   ========================================================================== */
+
+/* A Marca não tem peso nem caixa alternativos — proibido o navegador inventar.
+   Regra literal de §11. */
+.marca,
+[class*="marca-"] {
+  font-family: var(--font-marca);
+  font-synthesis: none;
+  font-weight: var(--peso-bold);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.marca-xl {
+  font-size: clamp(64px, 8vw, 120px);  /* 64–120px */
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+}
+
+.marca {
+  font-size: clamp(36px, 4vw, 56px);   /* 36–56px */
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* Regra tipográfica absoluta: nenhuma palavra cortada, nenhuma linha final
+   com uma palavra sozinha (exceto quando a própria palavra é longa, > 5
+   letras — aí ela não tem com quem dividir linha mesmo).
+   `text-wrap: balance` distribui as palavras entre as linhas em vez de
+   deixar o navegador simplesmente encher a linha e empurrar o resto — é
+   isso que evita a órfã. `overflow-wrap: break-word` é a rede de segurança:
+   só entra em ação se uma palavra sozinha não couber nem numa linha inteira,
+   e aí ela quebra em vez de estourar a caixa e ser comida pelo
+   `overflow: clip` de um ancestral. */
+.display-xl,
+.display,
+.h1,
+.h2,
+.h3 {
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.display-xl {
+  font-family: var(--font-principal);
+  font-weight: var(--peso-bold);
+  font-size: clamp(64px, 7vw, 96px);   /* 64–96px */
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.display {
+  font-family: var(--font-principal);
+  font-weight: var(--peso-semi);
+  font-size: clamp(40px, 4.5vw, 56px); /* 40–56px */
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.h1 {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  font-size: 32px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.h2 {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-bold);
+  font-size: 24px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.h3 {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-semi);
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.stat {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  font-size: clamp(40px, 5vw, 72px);   /* 40–72px */
+  line-height: 1;
+  font-variant-numeric: tabular-nums;  /* tnum obrigatório */
+}
+
+.body {
+  font-family: var(--font-terciaria);
+  font-weight: var(--peso-regular);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.body-lg {
+  font-family: var(--font-terciaria);
+  font-weight: var(--peso-regular);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.label {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-semi);
+  font-size: 15px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.caption {
+  font-family: var(--font-terciaria);
+  font-weight: var(--peso-regular);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.overline {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-semi);
+  font-size: 12px;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mono-reg {
+  font-family: var(--font-terciaria);
+  font-weight: var(--peso-medio);
+  font-size: 11px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dado numérico sempre tabular — §3.4 */
+[data-num],
+table td,
+table th {
+  font-variant-numeric: tabular-nums;
+}

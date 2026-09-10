@@ -1,0 +1,2196 @@
+/* ============================================================================
+   Página · Chapa 3 Marcão + Ciel
+   ============================================================================
+   Celular antes do monitor: 80% dos eleitores vão abrir este link no celular,
+   e é lá que as listas de trinta propostas e o diagrama de cinco etapas
+   quebravam no site publicado. Um DOM só, sem duplicar conteúdo por
+   breakpoint.
+
+   Cinco regras atravessam o arquivo inteiro:
+
+     1. `overflow: clip`, nunca `hidden`, em qualquer ancestral de algo grudado.
+        `hidden` cria contexto de rolagem e desliga `position: sticky` em todo
+        descendente.
+     2. Quem gruda nunca é quem mede. A seção é o trilho; o bloco de dentro
+        exibe.
+     3. `100svh`, nunca `100vh`. No celular a barra do navegador entra e sai.
+     4. Cor nunca comunica sozinha. Estado muda forma, peso ou preenchimento
+        junto.
+     5. Conteúdo nunca fica preso invisível. Sem JavaScript a página abre
+        inteira, e há rede de segurança de 2,5s para o resto.
+   ========================================================================== */
+
+/* Sem esta linha o acento fica preso no âmbar do Sigilo dentro dos blocos
+   Cartaz: substituição de custom property resolve no elemento onde foi
+   declarada. */
+[data-theme="cartaz"] {
+  --acento: var(--ambar);
+}
+
+:root {
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --alto-cabecalho: 60px;
+}
+
+.display-xl,
+.display {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: var(--peso-black);
+}
+
+/* A escala de cartaz. Existe em três lugares por página: a capa, o fecho e o
+   título da identidade. Não é tamanho de texto, é tipografia como
+   arquitetura — a palavra encosta nas bordas do container. Aparecer pouco é o
+   que a mantém como assinatura. */
+.display-xxl {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  /* O teto sai da palavra mais longa da peca: "RESPONSABILIDADE", 16
+     caracteres, que na Archivo Black mede ~11em de verdade (medido no
+     navegador; o 6,66em de uma conta anterior estava errado). `13vw` cresce
+     mais rapido do que qualquer palavra cabe: a 320px ele da 41,6px, contra
+     um piso real de 26px — e nao e so essa palavra: "ACONTECER" (Tecnicos) e
+     "TRAJETORIAS" (Estudantes) tambem estouravam a faixa e sumiam pela
+     borda, sem aviso, com o `.painel__titulo` que usa esta mesma escala. O
+     `calc()` usa a largura util de verdade (a tela menos 32px de recuo, o
+     mesmo recuo medido na capa, identidade e painel) dividida por 11, entao
+     acompanha a faixa em vez de aproximar por vw. Medido em 09/09/2026. */
+  font-size: clamp(27px, calc(100cqw / 11), 150px);
+  line-height: 0.88;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  /* Rede de segurança: se uma instância (`.painel--*-<slug>`, ao lado de
+     `.painel--fechamento`) tiver uma linha mais larga do que a medida, ela
+     quebra em vez de estourar a faixa. `text-wrap` e `overflow-wrap` são
+     herdados, então isto também vale pra cada `.linha__texto` de dentro. */
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* Palavra só em contorno: fio no lugar do preenchimento. É o que faz duas
+   linhas lerem como uma peça, e não como duas palavras. Cor explícita, nunca
+   `currentColor`: ele resolve para o `color` do próprio elemento, que aqui é
+   transparente, e o contorno some. */
+.vazado {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--bone);
+}
+
+@media (min-width: 768px) {
+  .vazado { -webkit-text-stroke-width: 2px; }
+}
+
+/* ============================================================================
+   Layout
+   ========================================================================== */
+.envelope {
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+  /* Container de tamanho: todo título composto à mão mede a própria linha
+     em `cqw` (largura ÚTIL do envelope, sem padding) em vez de `vw` (largura
+     da JANELA). `vw` ignora o `max-width` daqui — entre ~825px e 1024px o
+     envelope trava em 760px + recuo enquanto a janela segue crescendo, e
+     `calc(100vw - recuo)` continuava subindo com ela: a fonte ficava maior
+     do que a coluna, e a linha mais larga quebrava sozinha bem nessa faixa.
+     `cqw` acompanha o envelope de verdade, breakpoint nenhum precisa
+     "adivinhar" o recuo. Medido em 09/09/2026. */
+  container-type: inline-size;
+}
+
+@media (min-width: 768px) {
+  .envelope { padding-inline: var(--space-6); }
+}
+
+/* Medida de linha: 65 caracteres. O item mais importante da reconstrução
+   tipográfica, porque este site é uma coleção de listas longas. */
+.prosa { max-width: var(--medida-max); }
+
+.pilha > * + * { margin-top: var(--space-4); }
+
+/* O tema vive NA seção, nunca na raiz. A página alterna blocos Sigilo (azul
+   institucional) e blocos Cartaz (papel), e a troca acontece no limite, em
+   corte: sem transição, sem gradiente de passagem. */
+.bloco {
+  position: relative;
+  padding-block: var(--space-8);
+  background: var(--void);
+  color: var(--bone);
+  border-top: var(--hairline) solid var(--line);
+  overflow: clip;
+}
+
+/* O cabeçalho é grudado: sem esta folga toda âncora deposita o leitor com o
+   título por baixo dele. Vale para as seções e para os painéis. */
+.bloco,
+.painel,
+.capa {
+  scroll-margin-top: calc(var(--alto-cabecalho) + var(--space-4));
+}
+
+@media (min-width: 768px) {
+  .bloco { padding-block: var(--space-9); }
+}
+
+/* O rótulo entre parênteses. Um sistema de ornamento só, sem exceção. */
+.rotulo {
+  display: block;
+  color: var(--silver);
+  margin-bottom: var(--space-4);
+}
+
+.titulo { color: var(--bone); }
+.titulo [data-line] { padding-bottom: 0.08em; }
+
+.chamada {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: var(--space-7);
+}
+
+.microregistro {
+  display: block;
+  margin-top: var(--space-3);
+  color: var(--silver);
+}
+
+/* ---- O símbolo ------------------------------------------------------------
+   Oito triângulos. Sete âmbar, um céu — a proporção do arquivo original da
+   campanha. `atual` deixa tudo em `currentColor`, para o símbolo funcionar
+   como glifo dentro da faixa de acento do rodapé. */
+.simbolo { display: block; width: 100%; height: auto; }
+.simbolo--marca .simbolo__parte { fill: var(--ambar-area); }
+.simbolo--marca .simbolo__parte--ceu { fill: var(--ceu-area); }
+.simbolo--atual .simbolo__parte { fill: currentColor; }
+
+/* ============================================================================
+   Cabeçalho
+   ============================================================================
+   Nada de terceiro no topo: no site publicado o primeiro elemento clicável de
+   todas as páginas é a faixa de anúncio do Wix, e ela leva para fora. Numa
+   peça de campanha o topo é o espaço mais caro que existe.
+   ========================================================================== */
+.cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--void) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: var(--hairline) solid var(--line);
+  transition: background var(--motion-base) var(--ease-default);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .cabecalho { background: var(--void); }
+}
+
+.cabecalho__grade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: var(--space-3) var(--space-4);
+  min-height: var(--alto-cabecalho);
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--bone);
+  text-decoration: none;
+  flex: none;
+}
+
+.marca__simbolo {
+  width: 30px;
+  transition: transform var(--motion-slow) var(--ease-expo);
+}
+
+.marca:hover .marca__simbolo { transform: rotate(45deg); }
+
+.marca__nome { color: var(--bone); white-space: nowrap; }
+.marca__mais { color: var(--ambar); }
+
+.cabecalho__nav { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.cabecalho__nav::-webkit-scrollbar { display: none; }
+
+.cabecalho__lista {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* Alvo de toque de 44px sem depender do tamanho da letra. */
+.cabecalho__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  color: var(--silver);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--motion-fast) var(--ease-default);
+}
+
+.cabecalho__link:hover { color: var(--bone); }
+
+/* Estado ativo: cor E fio. No site publicado não há indicação nenhuma de em
+   qual página o visitante está. */
+.cabecalho__link--atual {
+  color: var(--bone);
+  border-bottom-color: var(--ambar);
+  font-weight: var(--peso-bold);
+}
+
+.cabecalho__cta {
+  display: none;
+  align-items: center;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-4);
+  border: var(--hairline) solid var(--ambar);
+  border-radius: var(--radius-touch);
+  color: var(--ambar);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--motion-fast) var(--ease-default),
+              color var(--motion-fast) var(--ease-default);
+}
+
+.cabecalho__cta:hover,
+.cabecalho__cta:focus-visible {
+  background: var(--ambar-area);
+  color: var(--void);
+}
+
+@media (max-width: 639px) {
+  /* O nome sai, o simbolo fica: os quatro publicos precisam caber sem
+     rolagem lateral, porque a navegacao por publico E a arquitetura do site
+     e um item cortado na borda nao e clicado. */
+  .marca__nome { display: none; }
+  .cabecalho__link { padding-inline: var(--space-2); }
+  .cabecalho__grade { padding-inline: var(--space-3); gap: var(--space-2); }
+}
+
+@media (min-width: 900px) {
+  .cabecalho__cta { display: inline-flex; }
+  .cabecalho__grade { padding-inline: var(--space-6); }
+}
+
+/* A faixa de eleição só existe com data preenchida em `config.js`. */
+.faixa-eleicao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--ambar-area);
+  color: var(--void);
+  text-align: center;
+}
+
+.faixa-eleicao a { color: var(--void); }
+.faixa-eleicao__marca {
+  width: 6px;
+  height: 6px;
+  background: var(--void);
+  flex: none;
+}
+
+/* ============================================================================
+   Painel de tela cheia · a capa e o fecho
+   ============================================================================
+   `100svh` e não `100vh`: no celular a barra do navegador entra e sai, e com
+   `100vh` o botão cai para fora da tela justamente em quem chega pelo link
+   compartilhado no WhatsApp.
+   ========================================================================== */
+.painel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - var(--alto-cabecalho));
+  padding-block: var(--space-5);
+  background: var(--void);
+  color: var(--bone);
+  overflow: clip;
+}
+
+@supports not (height: 100svh) {
+  .painel { min-height: calc(100vh - var(--alto-cabecalho)); }
+}
+
+.painel--fechamento {
+  border-top: var(--hairline) solid var(--line);
+  min-height: auto;
+  padding-block: var(--space-9);
+}
+
+/* Cada capa/fecho tem `linhas` diferentes (a Publico e a Home escrevem cada
+   uma à mão), então a escala `.display-xxl` compartilhada — medida para
+   "RESPONSABILIDADE" (~11em) — só é segura para quem também mede perto disso.
+   "a realidade de quem aprende" (Professores) mede 17,66em: no divisor
+   comum a linha estourava a faixa e quebrava sozinha em duas. Cada regra
+   abaixo usa a MESMA técnica do `.capa__titulo` (largura útil ÷ pior linha,
+   medida no navegador com a fonte carregada), só que travada nesta página.
+   Medido em 09/09/2026. */
+.painel--fechamento-home .painel__titulo {
+  /* pior linha: "Quem faz a FURB" / "precisa ser ouvido", 11,595em */
+  font-size: clamp(calc(288px / 11.7), calc(100cqw / 11.7), 150px);
+}
+.painel--fechamento-professores .painel__titulo {
+  /* pior linha: "a realidade de quem aprende", 17,66em */
+  font-size: clamp(calc(288px / 17.8), calc(100cqw / 17.8), 150px);
+}
+.painel--capa-tecnicos .painel__titulo {
+  /* pior linha: "a FURB acontecer", 10,85em */
+  font-size: clamp(calc(288px / 11), calc(100cqw / 11), 150px);
+}
+.painel--fechamento-tecnicos .painel__titulo {
+  /* pior linha: "Escutar não é uma etapa", 14,91em */
+  font-size: clamp(calc(288px / 15), calc(100cqw / 15), 150px);
+}
+.painel--capa-estudantes .painel__titulo {
+  /* pior linha: "50 cursos diferentes", 13,045em */
+  font-size: clamp(calc(288px / 13.2), calc(100cqw / 13.2), 150px);
+}
+.painel--fechamento-estudantes .painel__titulo {
+  /* pior linha: "Construindo", 8,035em — bem abaixo do divisor comum (11),
+     mas ganha a própria regra por consistência: o padrão daqui pra frente é
+     cada instância medir a própria linha, não confiar no valor de outra. */
+  font-size: clamp(calc(288px / 8.2), calc(100cqw / 8.2), 150px);
+}
+
+.moldura {
+  position: absolute;
+  inset: var(--space-2);
+  z-index: 0;
+  color: var(--line-strong);
+  pointer-events: none;
+}
+
+.moldura__canto { position: absolute; }
+.moldura__canto--se { top: 0; left: 0; }
+.moldura__canto--sd { top: 0; right: 0; }
+.moldura__canto--id { bottom: 0; right: 0; }
+.moldura__canto--ie { bottom: 0; left: 0; }
+
+/* `flex: 1` é o que centraliza: o centro toma toda a altura que sobra. O que
+   não encolhe é o botão. */
+.painel__centro {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding-block: var(--space-5);
+  min-height: 0;
+}
+
+.painel__kicker { margin-bottom: var(--space-2); }
+
+.painel__fio {
+  width: 100%;
+  height: 1px;
+  color: var(--line-strong);
+  overflow: visible;
+}
+
+.painel__titulo {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: var(--bone);
+  margin-block: var(--space-3);
+}
+
+/* Frase longa NÃO vai em caixa alta: acima de ~6 palavras a caixa alta
+   elimina a silhueta das palavras e o olho passa a soletrar. Caixa mista com
+   peso alto entrega o mesmo impacto sem o custo. */
+.painel__titulo--frase {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  font-size: clamp(30px, 6vw, 60px);
+  line-height: 1.06;
+  letter-spacing: -0.005em;
+  max-width: 20ch;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.painel__remate {
+  color: var(--ambar);
+  margin-bottom: var(--space-3);
+  max-width: 24ch;
+}
+
+.linha {
+  display: block;
+  overflow: clip;
+  /* Folga nos dois lados: embaixo, para o clip não comer a cedilha; em cima,
+     porque com `line-height` abaixo de 1 o acento sai da caixa de linha e o
+     til de "GESTÃO" e o til de "TRAJETÓRIAS" seriam cortados. */
+  padding-block: 0.2em 0.06em;
+  margin-block: -0.2em -0.06em;
+}
+
+.linha__texto {
+  display: block;
+  will-change: transform;
+}
+
+.painel__corpo {
+  color: var(--silver);
+  max-width: var(--medida-max);
+  margin-top: var(--space-4);
+}
+
+.painel__acao {
+  width: 100%;
+  margin-top: var(--space-5);
+}
+
+.fecho__prosa { margin-bottom: var(--space-5); }
+.fecho__prosa > p + p { margin-top: var(--space-3); }
+.fecho__prosa p { color: var(--silver); }
+
+/* Fora do fluxo: micro-registro não pode empurrar o botão para fora da tela.
+   Em tela muito baixa ele simplesmente sai. */
+.painel__rodape {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  color: var(--silver);
+}
+
+@media (max-height: 620px) {
+  .painel__rodape { display: none; }
+}
+
+@media (max-height: 700px) {
+  /* Mesma correcao do `.display-xxl` (~11em de verdade para a palavra mais
+     longa, nao os 6,66em de uma conta anterior): so a ALTURA muda aqui, a
+     largura util continua a mesma conta (tela menos 32px de recuo). */
+  .painel__titulo { font-size: clamp(27px, calc(100cqw / 11), 90px); }
+}
+
+.rolar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--silver);
+}
+
+.painel__seta {
+  display: block;
+  color: var(--silver);
+  font-family: var(--font-terciaria);
+  font-size: 18px;
+  line-height: 1;
+  margin-top: var(--space-1);
+}
+
+/* Números crus como ornamento honesto: dado exposto, não enfeite desenhado. */
+.crus {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2) var(--space-4);
+  text-align: right;
+}
+
+.crus b { color: var(--bone); font-weight: var(--peso-bold); }
+
+/* ============================================================================
+   A capa · o cartaz composto em código
+   ============================================================================
+   Substitui o painel tipográfico da abertura pelo cartaz da campanha
+   (`detalhes/assets/capa.png`) desenhado camada a camada. O único bitmap é o
+   retrato; o resto é geometria e texto. O fundo é azul sólido (--void).
+
+   Três camadas, do fundo para a frente:
+
+      0  a faixa azul, que é o FUNDO do bloco de manchete — assim ela veste o
+         texto sozinha em qualquer largura, sem coordenada em porcentagem para
+         manter em sincronia com a tipografia
+      1  o retrato, que oclui a faixa
+      2  a tipografia, por cima de tudo
+   ========================================================================== */
+.capa {
+  --faixa-fundo: #072b57;  /* o --void do Sigilo */
+  --faixa-tinta: #f2f7fc;  /* o --bone do Sigilo */
+  --faixa-acento: #f5b800; /* âmbar puro: 7,87:1 sobre o azul */
+  --faixa-largura: 100%;
+
+  position: relative;
+  /* Sem isto o `z-index: -1` do campo de pontos cairia atrás do próprio
+     papel da seção, na raiz do documento. */
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100svh - var(--alto-cabecalho));
+  /* No celular o retrato deita na base e ocupa 66vw de altura — a proporção
+     do arquivo (1200×795). A folga embaixo é o que impede a manchete de cair
+     em cima da cabeça de alguém. */
+  padding: var(--space-7) 0 calc(66vw + var(--space-4));
+  background: var(--void);
+  color: var(--bone);
+  overflow: clip;
+}
+
+@supports not (height: 100svh) {
+  .capa { min-height: calc(100vh - var(--alto-cabecalho)); }
+}
+
+/* O campo de pontos e as partículas soltas abaixo são compartilhados com a
+   identidade (`#identidade`): mesmo componente, mesmas classes — só o tema da
+   seção (`data-theme`, cor.css) muda `--bone`/`--line`/`--ambar-area` embaixo
+   deles. */
+
+/* O campo de pontos: atrás do fluxo, à frente do fundo sólido da seção. */
+.campo-pontos {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* As pontas soltas: a mesma ponta do símbolo, vagando devagar pela seção
+   inteira. Dez elementos fixos, nunca mais que dez ao mesmo tempo, cada um
+   com duração e atraso próprios — o desalinho de fase é o que lê como
+   aleatório, sem laço de JS. `z-index` acima da tipografia (2): passam por
+   CIMA do retrato e do texto, não atrás — por isso `pointer-events: none`,
+   senão bloqueariam o botão quando passassem sobre ele. */
+.particula {
+  position: absolute;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* As dez bases espalhadas pela seção inteira — de cima a baixo, de ponta a
+   ponta — já que por cima de tudo elas não precisam mais evitar o retrato
+   ou o texto: só passam na frente. */
+.particula--1 {
+  top: 8%;
+  left: 8%;
+  fill: var(--bone-pure);
+  animation: vagar-1 19s ease-in-out infinite;
+}
+
+.particula--2 {
+  top: 13%;
+  left: 76%;
+  width: 22px;
+  height: 22px;
+  fill: var(--ambar-area);
+  animation: vagar-2 24s ease-in-out infinite;
+  animation-delay: -8s;
+}
+
+.particula--3 {
+  top: 6%;
+  left: 42%;
+  width: 38px;
+  height: 38px;
+  fill: var(--bone-pure);
+  animation: vagar-3 27s ease-in-out infinite;
+  animation-delay: -16s;
+}
+
+.particula--4 {
+  top: 4%;
+  left: 60%;
+  width: 26px;
+  height: 26px;
+  fill: var(--ambar-area);
+  animation: vagar-4 21s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+.particula--5 {
+  top: 16%;
+  left: 24%;
+  width: 34px;
+  height: 34px;
+  fill: var(--bone-pure);
+  animation: vagar-5 25s ease-in-out infinite;
+  animation-delay: -12s;
+}
+
+.particula--6 {
+  top: 10%;
+  left: 90%;
+  width: 24px;
+  height: 24px;
+  fill: var(--ambar-area);
+  animation: vagar-6 30s ease-in-out infinite;
+  animation-delay: -20s;
+}
+
+.particula--7 {
+  top: 45%;
+  left: 15%;
+  width: 30px;
+  height: 30px;
+  fill: var(--bone-pure);
+  animation: vagar-7 17s ease-in-out infinite;
+  animation-delay: -6s;
+}
+
+.particula--8 {
+  top: 60%;
+  left: 55%;
+  width: 36px;
+  height: 36px;
+  fill: var(--ambar-area);
+  animation: vagar-8 23s ease-in-out infinite;
+  animation-delay: -14s;
+}
+
+.particula--9 {
+  top: 78%;
+  left: 30%;
+  width: 28px;
+  height: 28px;
+  fill: var(--bone-pure);
+  animation: vagar-9 26s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+.particula--10 {
+  top: 85%;
+  left: 68%;
+  width: 32px;
+  height: 32px;
+  fill: var(--ambar-area);
+  animation: vagar-10 29s ease-in-out infinite;
+  animation-delay: -18s;
+}
+
+@keyframes vagar-1 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  12% { opacity: 0.55; }
+  50% { opacity: 0.7; transform: translate(9vw, -6vh) rotate(70deg); }
+  88% { opacity: 0.4; }
+}
+
+@keyframes vagar-2 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  15% { opacity: 0.6; }
+  50% { opacity: 0.75; transform: translate(-11vw, 8vh) rotate(-95deg); }
+  85% { opacity: 0.35; }
+}
+
+@keyframes vagar-3 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  18% { opacity: 0.5; }
+  50% { opacity: 0.65; transform: translate(6vw, 10vh) rotate(50deg); }
+  82% { opacity: 0.3; }
+}
+
+@keyframes vagar-4 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  14% { opacity: 0.5; }
+  50% { opacity: 0.68; transform: translate(-8vw, 7vh) rotate(-60deg); }
+  86% { opacity: 0.32; }
+}
+
+@keyframes vagar-5 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  16% { opacity: 0.6; }
+  50% { opacity: 0.72; transform: translate(10vw, 5vh) rotate(85deg); }
+  84% { opacity: 0.38; }
+}
+
+@keyframes vagar-6 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  20% { opacity: 0.45; }
+  50% { opacity: 0.6; transform: translate(-7vw, -8vh) rotate(-40deg); }
+  80% { opacity: 0.28; }
+}
+
+@keyframes vagar-7 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  13% { opacity: 0.5; }
+  50% { opacity: 0.65; transform: translate(8vw, 9vh) rotate(55deg); }
+  87% { opacity: 0.3; }
+}
+
+@keyframes vagar-8 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  17% { opacity: 0.55; }
+  50% { opacity: 0.7; transform: translate(-9vw, -7vh) rotate(-75deg); }
+  83% { opacity: 0.34; }
+}
+
+@keyframes vagar-9 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  19% { opacity: 0.5; }
+  50% { opacity: 0.62; transform: translate(7vw, -8vh) rotate(65deg); }
+  81% { opacity: 0.3; }
+}
+
+@keyframes vagar-10 {
+  0%, 100% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  11% { opacity: 0.5; }
+  50% { opacity: 0.68; transform: translate(-10vw, 6vh) rotate(-50deg); }
+  89% { opacity: 0.32; }
+}
+
+/* Ornamento: sob movimento reduzido, some — não é conteúdo. */
+@media (prefers-reduced-motion: reduce) {
+  .particula { display: none; }
+}
+
+/* O retrato oclui a faixa e passa por baixo da tipografia. */
+.capa__pessoas {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+}
+
+/* A assinatura no alto, fora do fluxo: o miolo do cartaz precisa centrar na
+   altura útil, e um bloco no topo do fluxo o empurraria para baixo. */
+.capa__marca {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-3);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* O cartaz sangra: o envelope centrado das outras seções empurraria a coluna
+   de texto até 300px da borda em tela larga, e aí a manchete atropelaria o
+   retrato, que fica ancorado nos 45% da JANELA. Aqui o texto encosta na
+   margem, como no arquivo original — e o recuo vira constante, que é o que
+   deixa a escala da manchete ser calculável. */
+.capa .envelope { max-width: none; }
+
+.capa__selo {
+  flex: none;
+  width: clamp(30px, 3.2vw, 42px);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.capa__nome {
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  font-size: clamp(22px, 3.2vw, 40px);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+/* Ornamento, não texto: leva `aria-hidden` no markup, como no cabeçalho. */
+.capa__mais { color: var(--ambar-area); }
+
+/* O gradiente com parada dura corta a faixa em 70% da largura sem um segundo
+   elemento — e sem tirar o bloco do fluxo, que é o que a faz crescer com o
+   texto. */
+.capa__faixa {
+  background: linear-gradient(
+    90deg,
+    var(--faixa-fundo) 0 var(--faixa-largura),
+    transparent var(--faixa-largura)
+  );
+  padding-block: var(--space-5);
+}
+
+.capa__titulo,
+.capa__chapa {
+  position: relative;
+  z-index: 2;
+  color: var(--faixa-tinta);
+}
+
+.capa__titulo {
+  display: flex;
+  flex-direction: column;
+  /* Quem trava o tamanho é a linha "UNIÃO E GESTÃO COM": 11,7em na Archivo
+     Black (medido no navegador com a fonte carregada — o 7,41em de uma conta
+     anterior estava errado, media outra coisa). "Responsabilidade" sozinha é
+     só 11,005em, MENOR — não é ela quem manda. O `calc()` usa a largura útil
+     de verdade (tela menos 32px de recuo) dividida por 11,8 (11,7 + folga):
+     em qualquer largura, a linha mais larga cabe. O piso replica a MESMA
+     conta fixada em 320px (a menor tela testada) em vez de um valor solto —
+     abaixo de 320px real a linha pode voltar a estourar, mas nenhuma largura
+     testada faz isso. Medido em 09/09/2026. */
+  font-size: clamp(calc(288px / 11.8), calc(100cqw / 11.8), 56px);
+  line-height: 0.92;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.capa__acento { color: var(--faixa-acento); }
+
+.capa__chapa {
+  margin-top: var(--space-3);
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-regular);
+  font-size: clamp(20px, 3.2vw, 40px);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.capa__chapa b { font-weight: var(--peso-black); }
+
+.capa__sintese {
+  position: relative;
+  z-index: 2;
+  margin-top: var(--space-6);
+  font-family: var(--font-terciaria);
+  font-weight: var(--peso-bold);
+  font-size: clamp(19px, 2.4vw, 32px);
+  line-height: 1.2;
+}
+
+/* Âmbar sobre papel é tinta, nunca área: `--ambar` no Cartaz já resolve para
+   #8a5e00. O amarelo puro daria 1,7:1. */
+.capa__grifo { color: var(--ambar); }
+
+.capa__acao {
+  position: relative;
+  z-index: 2;
+  margin-top: var(--space-5);
+}
+
+/* O cartaz é DEITADO. Em pé — tablet em retrato, janela estreita e alta — o
+   retrato ancorado à direita vira um close: a caixa fica com proporção 0,4 e
+   o `cover` corta 70% da largura do arquivo, sobrando meia cabeça. Nessas
+   janelas vale a mesma pilha do celular, que é o formato certo para a peça em
+   pé. Daí a trava de proporção junto com a de largura. */
+@media (min-width: 768px) and (min-aspect-ratio: 1 / 1) {
+  .capa {
+    --faixa-largura: 70%;
+    padding: var(--space-8) 0 var(--space-7);
+  }
+
+  /* Deitada, a peça vira o cartaz: o retrato ancorado na base, da metade da
+     largura até a borda direita. `contain` mostra o arquivo inteiro — a
+     arte já vem enquadrada rente às duas figuras, então `cover` cortava
+     ombro/braço nas laterais; a sobra fica do fundo da seção, que é o
+     mesmo azul. */
+  .capa__pessoas {
+    left: 45%;
+    width: 55%;
+    height: 92%;
+    object-fit: contain;
+    object-position: 50% 100%;
+  }
+
+  .capa__marca { top: var(--space-5); }
+  .capa__faixa { padding-block: var(--space-6); }
+  /* 5,2vw sai de uma conta, não de gosto: a linha longa mede 7,41em, a
+     largura útil é 45% da janela menos o recuo do envelope (32/48/64px), e
+     5,2vw é o maior valor que cabe em TODAS as larguras — a pior é 1024px. */
+  .capa__titulo { font-size: clamp(40px, 5.2vw, 74px); }
+}
+
+/* ============================================================================
+   Marquise
+   ============================================================================
+   Faixa em laço, entre blocos de tema. Duas por página no máximo: repetida em
+   toda seção, o efeito morre.
+   ========================================================================== */
+.marquise {
+  position: relative;
+  overflow: hidden;
+  padding-block: var(--space-3);
+  background: var(--void);
+  color: var(--bone);
+  border-block: var(--hairline) solid var(--line);
+  white-space: nowrap;
+}
+
+/* Inclina com a velocidade da rolagem, que o Lenis escreve em
+   `--scroll-velocity`. Na faixa, não no trilho: o trilho já carrega o
+   translateX do laço. */
+.js .marquise {
+  transform: skewX(calc(var(--scroll-velocity, 0) * -0.35deg));
+}
+
+.marquise__trilho {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquise__metade { display: flex; }
+
+.marquise__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-inline: var(--space-4);
+}
+
+.marquise__palavra { color: var(--bone); }
+.marquise__ornamento { color: var(--ambar); }
+
+/* ============================================================================
+   Botão
+   ============================================================================
+   `<a href="mailto:">`, não `<button>`: sem JavaScript continua clicável.
+   ========================================================================== */
+.botao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-4) var(--space-5);
+  border: var(--hairline) solid var(--ambar-area);
+  border-radius: var(--radius-touch);
+  background: var(--ambar-area);
+  color: #072b57;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: clip;
+  transition: background var(--motion-fast) var(--ease-default),
+              color var(--motion-fast) var(--ease-default);
+}
+
+.botao:hover,
+.botao:focus-visible {
+  background: transparent;
+  color: var(--bone);
+  border-color: var(--bone);
+}
+
+/* Text roll: o rótulo duplicado desliza no eixo Y no hover. */
+.botao__rolo {
+  position: relative;
+  display: block;
+  height: 1em;
+  line-height: 1;
+  overflow: clip;
+}
+
+.botao__rotulo {
+  display: block;
+  transition: transform var(--motion-base) var(--ease-default);
+}
+
+.botao__rotulo + .botao__rotulo {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+}
+
+.botao:hover .botao__rotulo,
+.botao:focus-visible .botao__rotulo { transform: translateY(-100%); }
+
+.botao__seta { transition: transform var(--motion-fast) var(--ease-default); }
+.botao:hover .botao__seta { transform: translateX(var(--space-1)); }
+
+@media (min-width: 480px) {
+  .botao { width: auto; min-width: 300px; }
+}
+
+.botao--compacto {
+  width: auto;
+  min-width: 0;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Contorno: mesmo destino, sem a inundação de acento. Para onde o acento já
+   apareceu uma vez na tela. */
+.botao--fantasma,
+[data-theme="cartaz"] .botao--fantasma {
+  background: transparent;
+  border-color: var(--bone);
+  color: var(--bone);
+}
+
+.botao--fantasma:hover,
+.botao--fantasma:focus-visible {
+  background: var(--bone);
+  color: var(--void);
+  border-color: var(--bone);
+}
+
+/* ============================================================================
+   Pilares · manifesto assimétrico + slides numéricos
+   ========================================================================== */
+.pilares__titulo {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  /* Piso de 34px (fixo, sem calc) deixava a linha mais larga quebrar dentro
+     dela mesma. "com Responsabilidade?" era essa linha (11,81em) até a
+     reordenação abaixo: "com" foi para a linha do meio, então quem trava
+     agora é "União e Gestão com" (9,795em, medido) — 17% mais estreita.
+     Mesma técnica do `.capa__titulo`: divide a largura útil por 9,9
+     (9,795 + folga). Medido em 09/09/2026. */
+  font-size: clamp(calc(288px / 9.9), calc(100cqw / 9.9), 76px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: var(--bone);
+  margin-block: var(--space-3);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.pilares__tese {
+  color: var(--silver);
+  margin-top: var(--space-5);
+}
+
+.pilares__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  margin-top: var(--space-8);
+}
+
+.pilar {
+  position: relative;
+  padding-top: var(--space-5);
+  border-top: var(--hairline) solid var(--line-strong);
+}
+
+.pilar__numero {
+  display: block;
+  color: var(--surface-2);
+  line-height: 0.8;
+  font-size: clamp(72px, 20vw, 132px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.pilar__nome {
+  color: var(--bone);
+  margin-top: calc(var(--space-4) * -1);
+  margin-bottom: var(--space-3);
+}
+
+.pilar__texto { color: var(--silver); max-width: 42ch; }
+
+/* Cada palavra troca de estado como carimbo. Nasce apagada só sob `.js`. */
+.palavra {
+  display: inline-block;
+  transition: opacity var(--motion-fast) var(--ease-default),
+              color var(--motion-fast) var(--ease-default);
+}
+
+.js .palavra { opacity: 0.22; }
+.js .palavra--acesa,
+.palavra--acesa { opacity: 1; }
+.palavra--atual { color: var(--acento); }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .palavra { opacity: 1; }
+  .palavra--atual { color: inherit; }
+}
+
+/* ============================================================================
+   Compromissos · o baralho de cartas empilhadas
+   ============================================================================
+   Cada carta gruda num degrau abaixo da anterior e a seguinte sobe por cima:
+   no fim as três estão na tela, as cobertas reduzidas à faixa do número. A
+   lista ACUMULA, que é o argumento da seção.
+   ========================================================================== */
+.compromissos__cabeca { margin-bottom: var(--space-6); }
+.compromissos__sub { color: var(--silver); margin-top: var(--space-4); }
+
+.baralho {
+  --degrau-carta: var(--space-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.carta {
+  position: sticky;
+  top: calc(var(--alto-cabecalho) + var(--space-4) + var(--ordem) * var(--degrau-carta));
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  padding-top: var(--space-6);
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--line-strong);
+}
+
+/* A faixa de acento no alto da carta: uma ocorrência por card, e é ela que
+   carrega a cor fixa do verbo. Cor nunca sozinha — o número e o título mudam
+   junto. */
+.carta__faixa {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: var(--space-2);
+  background: var(--acento-area);
+}
+
+.carta:nth-child(even) { background: var(--surface-2); }
+
+.carta__indice { color: var(--silver); }
+
+.carta__titulo {
+  color: var(--bone);
+  /* Piso de 30px quebrava "2. SIMPLIFICAR" em "2." / "SIMPLIFICAR" — o "2."
+     sozinho. A 28px as três ("1. VALORIZAR", "2. SIMPLIFICAR", "3. AVANÇAR")
+     cabem inteiras numa linha só, medido nos 238px do cartão. Medido em
+     09/09/2026. */
+  font-size: clamp(28px, 8vw, 52px);
+  line-height: 1;
+}
+
+.carta__texto { color: var(--silver); }
+
+@media (min-width: 768px) {
+  .carta { padding: var(--space-6); padding-top: var(--space-7); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carta { position: static; }
+}
+
+/* ============================================================================
+   Públicos · cabeça grudada e cards em ziguezague
+   ========================================================================== */
+.publicos__palco { position: relative; }
+
+.publicos__cabeca {
+  position: sticky;
+  top: max(calc(var(--alto-cabecalho) + var(--space-6)), calc(50svh - 140px));
+  z-index: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: var(--space-6);
+}
+
+.publicos__cabeca .titulo {
+  text-transform: none;
+  letter-spacing: -0.005em;
+  line-height: 1.02;
+  max-width: 14ch;
+}
+
+.publicos__sub { color: var(--silver); margin-top: var(--space-4); max-width: 34ch; }
+
+.publicos__lista {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+}
+
+/* O card inteiro é o link, e ele PARECE clicável: fio que acende, símbolo que
+   gira um oitavo e CTA que muda de cor. No site publicado não há nenhuma
+   indicação visual de que os três cards sejam links. */
+.publico__link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--line-strong);
+  color: var(--bone);
+  text-decoration: none;
+  overflow: clip;
+  transition: border-color var(--motion-base) var(--ease-default),
+              background var(--motion-base) var(--ease-default);
+}
+
+.publico__link:hover,
+.publico__link:focus-visible {
+  border-color: var(--ambar);
+  background: var(--surface-2);
+}
+
+.publico__capa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  aspect-ratio: 16 / 9;
+  background: var(--void);
+  border-bottom: var(--hairline) solid var(--line);
+}
+
+.publico__simbolo {
+  width: 88px;
+  transition: transform 480ms var(--ease-expo);
+}
+
+.publico__link:hover .publico__simbolo,
+.publico__link:focus-visible .publico__simbolo { transform: rotate(45deg); }
+
+.publico__quem { color: var(--bone); }
+
+.publico__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  padding: var(--space-5);
+}
+
+.publico__indice { color: var(--silver); }
+.publico__titulo { color: var(--bone); }
+.publico__resumo { color: var(--silver); flex: 1 1 auto; }
+
+.publico__cta {
+  color: var(--ambar);
+  margin-top: var(--space-2);
+  transition: color var(--motion-fast) var(--ease-default);
+}
+
+.publico__link:hover .publico__cta { color: var(--bone); }
+
+@media (prefers-reduced-motion: reduce) {
+  .publicos__cabeca { position: static; }
+}
+
+/* ============================================================================
+   Identidade · o símbolo que se monta enquanto se lê
+   ============================================================================
+   O palco é o trilho e MEDE a travessia; a figura gruda e exibe. Os oito
+   triângulos nascem apagados e acendem um a um, junto com a parte escrita
+   correspondente. O fundo é o mesmo campo de pontos + partículas da capa
+   (`.campo-pontos`/`.particula`), vestido em Cartaz — ver nota acima delas.
+   ========================================================================== */
+.identidade {
+  /* Mesma razão da capa: sem isto o `z-index: -1` do campo de pontos cairia
+     atrás do próprio papel da seção, na raiz do documento. */
+  isolation: isolate;
+}
+
+.identidade__titulo {
+  display: flex;
+  flex-direction: column;
+  color: var(--bone);
+  margin-block: var(--space-3);
+}
+
+.identidade__prosa { margin-top: var(--space-6); color: var(--silver); }
+
+.identidade__palco { margin-top: var(--space-8); }
+
+ /* No celular a figura fica POR CIMA da lista: e o simbolo que se monta
+    enquanto as partes escritas passam por baixo dele. Com a figura por baixo
+    (o arranjo de duas colunas do monitor) os cards a cobrem e nao sobra
+    animacao nenhuma para ver. */
+.identidade__figura {
+  position: sticky;
+  top: var(--alto-cabecalho);
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-4);
+  background: var(--void);
+  border-bottom: var(--hairline) solid var(--line);
+}
+
+.identidade__simbolo { width: min(38vw, 168px); }
+
+/* O triângulo apagado é contorno; o aceso é cheio. Forma, não só cor. */
+.simbolo__parte {
+  transition: fill var(--motion-base) var(--ease-default),
+              opacity var(--motion-base) var(--ease-default);
+}
+
+.js .identidade__simbolo .simbolo__parte {
+  fill: transparent;
+  stroke: var(--line-strong);
+  stroke-width: 2;
+}
+
+.js .identidade__simbolo .simbolo__parte.acesa {
+  fill: var(--ambar-area);
+  stroke: var(--ambar-area);
+}
+
+.js .identidade__simbolo .simbolo__parte--ceu.acesa {
+  fill: var(--ceu-area);
+  stroke: var(--ceu-area);
+}
+
+.partes {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.parte {
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  transition: border-left-color var(--motion-base) var(--ease-default),
+              opacity var(--motion-base) var(--ease-default);
+}
+
+.js .parte { opacity: 0.45; }
+.js .parte.acesa,
+.parte.acesa { opacity: 1; }
+.parte.acesa { border-left-color: var(--ambar-area); }
+.parte.atual { border-left-width: 6px; }
+
+.parte__n { display: block; color: var(--silver); margin-bottom: var(--space-2); }
+.parte__nome { color: var(--bone); margin-bottom: var(--space-2); }
+.parte__texto { color: var(--silver); }
+
+.identidade__chamada { align-items: flex-start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .identidade__figura { position: static; }
+  .js .parte { opacity: 1; }
+  .js .identidade__simbolo .simbolo__parte { fill: var(--ambar-area); stroke: none; }
+  .js .identidade__simbolo .simbolo__parte--ceu { fill: var(--ceu-area); }
+}
+
+/* ============================================================================
+   Enquadramento
+   ========================================================================== */
+.enquadramento__cabeca { margin-bottom: var(--space-5); }
+.enquadramento__titulo { color: var(--bone); }
+
+.enquadramento__corpo > p + p { margin-top: var(--space-4); }
+.enquadramento__p { color: var(--silver); }
+
+/* O palco é o trilho da frase que acende. Mais alto que a tela, com o texto
+   grudado no meio: quem gruda nunca é quem mede. */
+.enquadramento__palco {
+  margin-top: var(--space-8);
+  padding-top: var(--space-7);
+  border-top: var(--hairline) solid var(--line);
+}
+
+.enquadramento__tese {
+  color: var(--bone);
+  text-transform: none;
+  letter-spacing: -0.005em;
+  line-height: 1.08;
+  font-size: clamp(26px, 6.5vw, 52px);
+  max-width: 20ch;
+}
+
+.enquadramento__depois {
+  color: var(--silver);
+  margin-top: var(--space-5);
+}
+
+/* ============================================================================
+   Propostas · atalhos grudados e recibo catalogado
+   ============================================================================
+   As listas NÃO colapsam. A regra do catálogo é que conteúdo nunca fica preso
+   invisível, e proposta escondida em site de campanha é proposta não lida. O
+   que resolve a mesma dor é a barra de âncoras grudada.
+   ========================================================================== */
+.propostas__cabeca { margin-bottom: var(--space-5); }
+
+/* Piso de 32px (herdado de `.h1`) quebrava "N propostas para <público>" em
+   "N propostas" / "para" / "<público>" nos 288px do celular — "para"
+   sozinho. A 24px viram duas linhas de 2 palavras cada, testado nas três
+   páginas. Medido em 09/09/2026. */
+.propostas__titulo { font-size: 24px; }
+
+.atalhos {
+  position: sticky;
+  top: var(--alto-cabecalho);
+  z-index: 10;
+  background: var(--void);
+  border-block: var(--hairline) solid var(--line);
+  margin-bottom: var(--space-7);
+}
+
+.atalhos__lista {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.atalhos__lista::-webkit-scrollbar { display: none; }
+
+.atalho { flex: 1 1 0; min-width: 0; }
+
+.atalho__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+  padding-block: var(--space-2);
+  color: var(--silver);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color var(--motion-fast) var(--ease-default);
+}
+
+/* Vazado quando não está em leitura, cheio quando está: preenchimento, não
+   só cor. */
+.atalho__ponto {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border: var(--hairline) solid var(--line-strong);
+  background: transparent;
+  transition: background var(--motion-fast) var(--ease-default),
+              border-color var(--motion-fast) var(--ease-default);
+}
+
+.atalho__verbo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atalho__conta { margin-left: auto; color: var(--silver); }
+
+.atalho--aceso .atalho__link {
+  color: var(--bone);
+  border-bottom-color: var(--acento-area);
+}
+
+.atalho--aceso .atalho__ponto {
+  background: var(--acento-area);
+  border-color: var(--acento-area);
+}
+
+.propostas__trilho {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+}
+
+.grupo { scroll-margin-top: calc(var(--alto-cabecalho) + 64px); }
+
+.grupo__cabeca {
+  position: relative;
+  padding-top: var(--space-5);
+  border-top: 3px solid var(--acento-area);
+  margin-bottom: var(--space-5);
+}
+
+.grupo__n { display: block; color: var(--silver); margin-bottom: var(--space-3); }
+
+.grupo__titulo {
+  color: var(--bone);
+  font-size: clamp(28px, 7vw, 52px);
+  line-height: 1;
+}
+
+.grupo__verbo { color: var(--acento); }
+.grupo__complemento { color: var(--bone); }
+
+.grupo__itens { display: flex; flex-direction: column; }
+
+/* Corpo de 17–18px, entrelinha 1.65 e medida de 65 caracteres: a mudança
+   tipográfica de maior efeito na peça inteira, porque este site é uma coleção
+   de listas longas. */
+.proposta {
+  display: grid;
+  grid-template-columns: var(--space-8) 1fr;
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+  border-top: var(--hairline) solid var(--line);
+}
+
+.proposta:first-child { border-top: 0; }
+.proposta__n { color: var(--silver); padding-top: 0.35em; }
+.proposta__texto { color: var(--bone); font-size: 17px; line-height: 1.65; }
+
+/* ============================================================================
+   Reforço
+   ========================================================================== */
+/* ---- Selo carimbado (Professores · a nota sobre a ETEVI) ----------------- */
+.reforco__grade { display: flex; flex-direction: column; }
+
+.selo {
+  position: relative;
+  padding: var(--space-6) var(--space-5);
+  border: 2px solid var(--bone);
+  outline: var(--hairline) solid var(--bone);
+  outline-offset: 5px;
+  background: var(--surface-1);
+  transform: rotate(-1.5deg);
+  transform-origin: 50% 50%;
+  margin: var(--space-4) var(--space-2) var(--space-5);
+  will-change: transform, opacity;
+}
+
+/* Piso de 32px (herdado de `.h1`) quebrava as 7 palavras da nota da ETEVI em
+   linhas de 1 palavra ("DESTA" sozinho) dentro dos 220px do selo. A 22px
+   ficam 3 linhas de 2-3 palavras cada. Medido em 09/09/2026. */
+.selo__titulo { color: var(--bone); margin-bottom: var(--space-4); font-size: 22px; }
+.selo__texto + .selo__texto { margin-top: var(--space-3); }
+.selo__texto { color: var(--silver); }
+.selo__registro { display: block; margin-top: var(--space-5); color: var(--silver); }
+
+.selo__cruz {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+}
+.selo__cruz::before,
+.selo__cruz::after { content: ""; position: absolute; background: var(--bone); }
+.selo__cruz::before { left: 6px; top: 0; width: 1px; height: 13px; }
+.selo__cruz::after { top: 6px; left: 0; width: 13px; height: 1px; }
+.selo__cruz--se { top: -20px; left: -20px; }
+.selo__cruz--sd { top: -20px; right: -20px; }
+.selo__cruz--ie { bottom: -20px; left: -20px; }
+.selo__cruz--id { bottom: -20px; right: -20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .selo { transform: none; }
+}
+
+/* ---- Saber (Técnicos) ---------------------------------------------------- */
+.conhece { display: flex; flex-direction: column; }
+
+.conhece__item {
+  position: relative;
+  padding: var(--space-4) 0 var(--space-4) var(--space-6);
+  border-top: var(--hairline) solid var(--line);
+  color: var(--bone);
+  max-width: var(--medida-max);
+}
+
+.conhece__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(var(--space-4) + 0.55em);
+  width: var(--space-4);
+  height: 2px;
+  background: var(--acento-area);
+}
+
+.reforco__meio { margin-top: var(--space-8); }
+
+.reforco__titulo { color: var(--bone); margin-bottom: var(--space-3); }
+
+/* Piso de 32px (herdado de `.h1`) quebrava "QUEM FAZ, SABE" em "QUEM" /
+   "FAZ, SABE" nos 288px do bloco de Técnicos. A 30px cabe inteira numa
+   linha. Escopado a `--saber` pra não mexer no `.reforco__titulo display`
+   de Estudantes. Medido em 09/09/2026. */
+.reforco--saber .reforco__titulo { font-size: 30px; }
+
+.reforco__linhas {
+  display: flex;
+  flex-direction: column;
+  color: var(--bone);
+  /* Piso de 30px estourava "Vários conhecimentos" (13,865em medido, a linha
+     mais larga das três de Técnicos) — quebrava em "Vários" / "conhecimentos",
+     sozinhos. Divide a largura útil por 14 (13,865 + folga), mesma técnica do
+     `.capa__titulo`. Medido em 09/09/2026. */
+  font-size: clamp(calc(288px / 14), calc(100cqw / 14), 64px);
+  line-height: 1.02;
+  margin-bottom: var(--space-5);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.reforco__p { color: var(--silver); }
+.reforco__p + .reforco__p { margin-top: var(--space-3); }
+
+/* O fio fica no PRIMEIRO FILHO, nao no envelope: o envelope carrega o
+   padding lateral, e a borda nele sairia mais larga que o texto que ela
+   sublinha. */
+.reforco__tese-bloco { margin-top: var(--space-8); }
+
+.reforco__tese {
+  padding-top: var(--space-6);
+  border-top: 3px solid var(--ambar-area);
+  color: var(--bone);
+  text-transform: none;
+  letter-spacing: -0.005em;
+  line-height: 1.06;
+  font-size: clamp(26px, 6.5vw, 52px);
+  max-width: 22ch;
+  margin-bottom: var(--space-5);
+}
+
+/* ---- Cartões (Estudantes) ------------------------------------------------ */
+.reforco--cartoes .reforco__titulo {
+  font-size: clamp(32px, 9vw, 72px);
+  line-height: 1;
+}
+
+.reforco__sub { color: var(--ambar); margin-block: var(--space-3) var(--space-5); }
+.reforco__prosa { margin-bottom: var(--space-7); }
+
+.cartoes { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.cartao {
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--line);
+  border-top: 3px solid var(--acento-area);
+}
+
+.cartao__n { display: block; color: var(--silver); margin-bottom: var(--space-3); }
+.cartao__nome { color: var(--bone); margin-bottom: var(--space-2); }
+.cartao__texto { color: var(--silver); }
+
+/* ============================================================================
+   Método · a régua de cinco etapas
+   ============================================================================
+   No site publicado isto é UMA IMAGEM de 980×351 com trinta bullets
+   rasterizados dentro, a mesma nas três páginas. Em 390px é ilegível, e para
+   leitor de tela o método central da campanha simplesmente não existe.
+   ========================================================================== */
+.metodo__cabeca { margin-bottom: var(--space-6); }
+
+.metodo__titulo {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-secundaria);
+  font-weight: var(--peso-black);
+  /* Piso de 40px estourava "COMO VAMOS" (7,425em medido) em telas estreitas —
+     quebrava em "COMO" / "VAMOS", sozinhos. Divide a largura útil por 7,5
+     (7,425 + folga), mesma técnica do `.capa__titulo`. Medido em 09/09/2026. */
+  font-size: clamp(calc(288px / 7.5), calc(100cqw / 7.5), 96px);
+  line-height: 0.94;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--bone);
+  margin-block: var(--space-3);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.metodo__tese { color: var(--ambar); margin-top: var(--space-4); }
+
+.regua {
+  position: sticky;
+  top: var(--alto-cabecalho);
+  z-index: 10;
+  background: var(--void);
+  border-block: var(--hairline) solid var(--line);
+}
+
+.regua__lista {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.regua__lista::-webkit-scrollbar { display: none; }
+
+.regua__etapa { flex: 1 1 0; min-width: 84px; }
+
+.regua__link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding-block: var(--space-3);
+  color: var(--silver);
+  text-decoration: none;
+}
+
+/* Vazado quando não está em leitura, cheio no acento quando está. Corte seco,
+   e o número muda de peso junto: cor nunca comunica sozinha. */
+.regua__ponto {
+  display: block;
+  height: 6px;
+  background: transparent;
+  border: var(--hairline) solid var(--line-strong);
+  transition: background var(--motion-fast) var(--ease-default),
+              border-color var(--motion-fast) var(--ease-default);
+}
+
+.regua__n { color: var(--silver); }
+.regua__nome { white-space: nowrap; font-size: 10px; }
+
+.regua__etapa--acesa .regua__ponto {
+  background: var(--ambar-area);
+  border-color: var(--ambar-area);
+}
+
+.regua__etapa--acesa .regua__link { color: var(--bone); font-weight: var(--peso-bold); }
+.regua__etapa--acesa .regua__n { color: var(--ambar); }
+
+.metodo__trilho {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-9);
+  margin-top: var(--space-8);
+}
+
+.etapa { scroll-margin-top: calc(var(--alto-cabecalho) + 72px); }
+
+.etapa__cabeca {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: 3px solid var(--acento-area);
+}
+
+.etapa__n {
+  color: var(--surface-2);
+  font-size: clamp(56px, 16vw, 110px);
+  line-height: 0.8;
+  flex: none;
+}
+
+.etapa__nome { color: var(--bone); }
+
+.etapa__itens { display: flex; flex-direction: column; }
+
+.etapa__item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  color: var(--bone);
+  border-top: var(--hairline) solid var(--line);
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: var(--medida-max);
+}
+
+.etapa__item:first-child { border-top: 0; }
+
+.etapa__marca {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.5em;
+  background: var(--acento-area);
+}
+
+.principios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-9);
+  padding-top: var(--space-6);
+  border-top: var(--hairline) solid var(--line);
+}
+
+.principio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--line);
+}
+
+.principio__n { color: var(--ambar); }
+.principio__texto { color: var(--bone); }
+
+@media (prefers-reduced-motion: reduce) {
+  .regua { position: static; }
+  .atalhos { position: static; }
+}
+
+/* ============================================================================
+   Rodapé
+   ========================================================================== */
+.rodape {
+  position: relative;
+  background: var(--void);
+  color: var(--silver);
+  border-top: var(--hairline) solid var(--line);
+}
+
+.rodape__grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-7) var(--space-5);
+  padding-block: var(--space-8) var(--space-7);
+}
+
+.rodape__contato,
+.rodape__aviso { grid-column: 1 / -1; }
+
+.rodape__contato { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.rodape__par {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+}
+
+.rodape .rotulo { margin-bottom: 0; }
+
+.rodape__grande {
+  color: var(--bone);
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.rodape__grande--acento { color: var(--ambar); }
+
+.rodape__coluna .rotulo { margin-bottom: var(--space-3); }
+.rodape__lista { display: flex; flex-direction: column; }
+
+.rodape__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  color: var(--bone);
+  text-decoration: none;
+  transition: color var(--motion-fast) var(--ease-default);
+}
+
+.rodape__link:hover { color: var(--ambar); }
+
+.rodape__aviso { display: flex; flex-direction: column; gap: var(--space-4); }
+.rodape__aviso .botao { width: 100%; }
+
+.rodape__base {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  padding-block: var(--space-5);
+  border-top: var(--hairline) solid var(--line);
+}
+
+/* A faixa final: âmbar inundando, tinta azul por cima. É a única inundação de
+   acento do rodapé. */
+.rodape__faixa {
+  background: var(--ambar-area);
+  color: #072b57;
+  padding-block: var(--space-8);
+  overflow: clip;
+}
+
+.rodape__faixa-grade {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.rodape__simbolo { width: 96px; color: #072b57; }
+
+.rodape__sintese {
+  color: #072b57;
+  text-transform: none;
+  letter-spacing: -0.005em;
+  line-height: 1.02;
+  max-width: 16ch;
+  /* Piso de 40px (herdado de `.display`) forçava "Uma FURB mais conectada,
+     simples e humana." (7 palavras) em 5 linhas dentro dos 288px do rodapé
+     no celular — "mais", "simples" e "conectada," cada um sozinho. A 28px
+     (o piso geral de legibilidade, `--min-principal`) vira 3 linhas e cada
+     uma tem 2+ palavras ou uma só longa. Medido em 09/09/2026. */
+  font-size: clamp(28px, 4.5vw, 56px);
+}
+
+.rodape__nota { color: var(--silver); }
+
+/* ============================================================================
+   Camadas fixas
+   ========================================================================== */
+.indice-fixo {
+  position: fixed;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 5;
+  color: #ffffff;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 420px) {
+  .indice-fixo { display: none; }
+}
+
+/* Voltar ao topo: obrigatório numa página de trinta propostas mais trinta
+   itens de método. Entra e sai por corte. */
+.ao-topo {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-1);
+  border: var(--hairline) solid var(--line-strong);
+  border-radius: var(--radius-touch);
+  color: var(--bone);
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity var(--motion-base) var(--ease-default),
+              transform var(--motion-base) var(--ease-default),
+              visibility 0s linear var(--motion-base);
+}
+
+.ao-topo--visivel {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.ao-topo:hover { border-color: var(--ambar); color: var(--ambar); }
+
+/* ============================================================================
+   Monitor
+   ============================================================================
+   De 1024px o envelope abre para 1120px (1440 a partir de 1440). A grade se
+   aplica POR SEÇÃO, em larguras alternadas: a alternância é o ritmo. A medida
+   de linha não muda.
+   ========================================================================== */
+@media (min-width: 1024px) {
+  :root { --alto-cabecalho: 68px; }
+
+  .envelope {
+    max-width: 1120px;
+    padding-inline: var(--space-7);
+  }
+
+  /* ---- Painéis --------------------------------------------------------- */
+  .painel { padding-block: var(--space-6); }
+  .painel__titulo--frase { font-size: clamp(44px, 4.6vw, 68px); max-width: 22ch; }
+
+  /* ---- Pilares --------------------------------------------------------- */
+  .pilares__manifesto {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: end;
+  }
+  .pilares__manifesto .rotulo { grid-column: 1 / -1; }
+  /* `6vw`/`cqw` não servem aqui: a coluna (8/12 do envelope) é uma FRAÇÃO do
+     container, e nem `vw` nem `cqw` enxergam essa fração — os dois assumem
+     que o elemento usa a largura toda. Medido: a coluna fica travada em
+     608px de 1024 a 1439px (o envelope também trava, em 1120px, nesse
+     intervalo) e em 864px dali pra cima. 608 / 9,9 = 61px; usamos 60 com
+     folga. Medido em 09/09/2026. */
+  .pilares__titulo { grid-column: 1 / span 8; font-size: 60px; }
+  .pilares__tese { grid-column: 8 / -1; align-self: end; margin-top: 0; padding-bottom: var(--space-4); }
+
+  /* Os três pilares em ziguezague: nenhum alinha com o vizinho, e é isso que
+     faz a grade ler como composição em vez de tabela. */
+  .pilares__lista {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: var(--space-6);
+    row-gap: 0;
+    margin-top: var(--space-9);
+  }
+  .pilar:nth-child(2) { margin-top: var(--space-8); }
+  .pilar:nth-child(3) { margin-top: calc(var(--space-8) * 2); }
+
+  /* ---- Compromissos ---------------------------------------------------- */
+  .compromissos__grade {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .compromissos__cabeca {
+    grid-column: 1 / span 4;
+    position: sticky;
+    top: calc(var(--alto-cabecalho) + var(--space-6));
+    margin-bottom: 0;
+  }
+  .baralho { grid-column: 6 / -1; gap: var(--space-5); }
+
+  /* ---- Públicos em ziguezague ------------------------------------------ */
+  .publicos__lista {
+    --publico-alto: 520px;
+    display: flex;
+    flex-direction: column;
+    margin-top: var(--space-8);
+    gap: 0;
+  }
+  .publico {
+    width: calc((100% - 2 * var(--space-6)) / 3);
+    height: var(--publico-alto);
+  }
+  .publico:nth-child(1) { align-self: flex-start; }
+  .publico:nth-child(2) { align-self: flex-end; margin-top: calc(18vh - var(--publico-alto)); }
+  .publico:nth-child(3) { align-self: center; margin-top: var(--space-8); }
+  .publicos__cabeca .titulo { max-width: 16ch; }
+
+  /* ---- Identidade: o símbolo à esquerda, as partes à direita ------------ */
+  .identidade__grade {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .identidade__figura {
+    grid-column: 1 / span 5;
+    top: max(calc(var(--alto-cabecalho) + var(--space-6)), calc(50svh - 200px));
+    z-index: 0;
+    background: transparent;
+    border-bottom: 0;
+  }
+  .identidade__simbolo { width: 100%; max-width: 380px; }
+  .partes { grid-column: 7 / -1; margin-top: 0; }
+
+  /* ---- Enquadramento ---------------------------------------------------- */
+  .enquadramento__grade {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .enquadramento__cabeca {
+    grid-column: 1 / span 4;
+    position: sticky;
+    top: calc(var(--alto-cabecalho) + var(--space-6));
+    margin-bottom: 0;
+  }
+  .enquadramento__corpo { grid-column: 6 / -1; }
+
+  /* ---- Propostas -------------------------------------------------------- */
+  .atalhos__lista { gap: var(--space-6); }
+  .atalho { flex: 0 1 auto; }
+  .grupo__cabeca { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--space-6); }
+  .grupo__n { grid-column: 1 / span 3; margin-bottom: 0; padding-top: 0.6em; }
+  .grupo__titulo { grid-column: 4 / -1; }
+  .grupo__itens { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--space-6); }
+  .proposta { grid-column: 4 / -1; }
+
+  /* ---- Método ----------------------------------------------------------- */
+  .metodo__cabeca {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: end;
+  }
+  .metodo__cabeca .rotulo { grid-column: 1 / -1; }
+  /* Mesma trava de coluna-fração do `.pilares__titulo` acima: a coluna
+     (7/12) fica em 528px de 1024 a 1439px. 528 / 7,5 = 70px. */
+  .metodo__titulo { grid-column: 1 / span 7; font-size: 70px; }
+  .metodo__tese { grid-column: 8 / -1; align-self: end; padding-bottom: var(--space-4); }
+
+  .etapa {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .etapa__cabeca {
+    grid-column: 1 / span 4;
+    position: sticky;
+    top: calc(var(--alto-cabecalho) + 96px);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 0;
+  }
+  .etapa__itens { grid-column: 6 / -1; }
+  .metodo__trilho { gap: var(--space-9); }
+
+  .principios { flex-direction: row; }
+  .principio { flex: 1 1 0; }
+
+  /* ---- Reforço ---------------------------------------------------------- */
+  .selo { max-width: 720px; padding: var(--space-8) var(--space-7); align-self: center; }
+  .reforco__grade { align-items: stretch; }
+  .cartoes { flex-direction: row; }
+  .cartao { flex: 1 1 0; }
+  .conhece__item { font-size: 20px; }
+
+  /* ---- Rodapé em quatro colunas ----------------------------------------- */
+  .rodape__grade {
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    padding-block: var(--space-9) var(--space-8);
+  }
+  .rodape__contato { grid-column: 1 / span 4; }
+  .rodape__coluna:nth-of-type(1) { grid-column: 6 / span 2; }
+  .rodape__coluna:nth-of-type(2) { grid-column: 8 / span 2; }
+  .rodape__aviso { grid-column: 10 / -1; }
+  .rodape__par { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+  .rodape__grande { font-size: 28px; line-height: 1.1; }
+
+  .rodape__faixa { padding-block: var(--space-9); }
+  .rodape__faixa-grade {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: var(--space-6);
+    align-items: end;
+  }
+  .rodape__simbolo { grid-column: 1 / span 3; width: 100%; max-width: 180px; }
+  .rodape__sintese { grid-column: 6 / -1; font-size: clamp(40px, 4.5vw, 64px); max-width: none; }
+
+  /* ---- Tipografia: um degrau acima -------------------------------------- */
+  .titulo { font-size: clamp(40px, 4.5vw, 56px); line-height: 1; }
+
+  /* Depois de `.titulo`, nunca antes: mesma especificidade (uma classe), e
+     quem vem depois no cascata vence. A cabeça grudada vive em quatro
+     colunas fixas (~288px, o envelope não cresce mais entre 1024 e 1440) —
+     a escala geral de `.titulo` (até 56px) transborda a coluna e o
+     `overflow: clip` da seção come a palavra. O teto de 36px também
+     transbordava: "COMPROMISSOS" mede 0,6873× o próprio font-size em
+     largura (medido no navegador), e a 36px isso já dá 327px — maior que a
+     coluna. 30px é o maior valor que ainda cabe (273px). Medido em
+     09/09/2026. */
+  .compromissos__titulo,
+  .propostas__titulo,
+  .enquadramento__titulo {
+    font-size: clamp(26px, 2.9vw, 30px);
+    line-height: 1.06;
+  }
+  .body { font-size: 18px; line-height: 1.65; }
+  .marquise__trilho { font-size: 24px; line-height: 1.15; }
+  .marquise { padding-block: var(--space-4); }
+  .proposta__texto { font-size: 18px; }
+  .etapa__item { font-size: 18px; }
+}
+
+@media (min-width: 1440px) {
+  .envelope {
+    max-width: 1440px;
+    padding-inline: var(--space-8);
+  }
+
+  /* Mesma trava de coluna-fração do bloco de 1024px, recalculada pro
+     envelope maior: a coluna de 8/12 sobe pra 864px. 864 / 9,9 = 87px. */
+  .pilares__titulo { font-size: 87px; }
+  /* Idem pra `.metodo__titulo` (coluna 1/7): 752px / 7,5 = 100px. */
+  .metodo__titulo { font-size: 100px; }
+}

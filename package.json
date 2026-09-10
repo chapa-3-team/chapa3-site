@@ -1,0 +1,25 @@
+{
+  "name": "chapa3-marcao-ciel",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Site da Chapa 3 — Marcão + Ciel — à Reitoria da FURB. Reestruturação do site publicado no Wix, com o mesmo conteúdo e a arquitetura de informação preservada.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build --ssr src/entry-server.jsx --outDir dist-ssr && node scripts/prerender.mjs && node scripts/check-size.mjs",
+    "preview": "vite preview",
+    "size": "node scripts/check-size.mjs",
+    "verificar": "node scripts/verificar.mjs"
+  },
+  "dependencies": {
+    "animejs": "^4.0.2",
+    "lenis": "^1.3.26",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "playwright-core": "^1.63.0",
+    "vite": "^6.0.0"
+  }
+}
