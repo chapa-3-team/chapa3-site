@@ -281,6 +281,8 @@
   .atalho__verbo { font-size: 11px; }
   .atalhos { padding-inline: 8px; }
   .atalhos__lista { gap: 0; }
+  .grupo__titulo { font-size: clamp(22px, 6vw, 40px); }
+  .grupo__n { font-size: 12px; }
 }
 
 @media (max-width: 768px) {
@@ -292,6 +294,8 @@
   .atalho__verbo { font-size: 10px; }
   .atalho__conta { font-size: 10px; }
   .atalhos { padding-inline: 4px; }
+  .grupo__titulo { font-size: clamp(18px, 5vw, 28px); }
+  .grupo__n { font-size: 11px; margin-bottom: var(--space-2); }
 }
 
 @media (min-width: 900px) {
