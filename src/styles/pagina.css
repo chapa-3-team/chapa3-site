@@ -219,12 +219,12 @@
 .marca__nome { color: var(--bone); white-space: nowrap; }
 .marca__mais { color: var(--ambar); }
 
-.cabecalho__nav { min-width: 0; }
+.cabecalho__nav { min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.cabecalho__nav::-webkit-scrollbar { display: none; }
 
 .cabecalho__lista {
   display: flex;
   gap: var(--space-1);
-  flex-wrap: wrap;
 }
 
 /* Alvo de toque de 44px sem depender do tamanho da letra. */
@@ -1444,7 +1444,7 @@
 
 .atalhos__lista::-webkit-scrollbar { display: none; }
 
-.atalho { flex: 1 1 0; min-width: 0; }
+.atalho { flex: 0 1 auto; }
 
 .atalho__link {
   display: flex;
@@ -1470,7 +1470,7 @@
               border-color var(--motion-fast) var(--ease-default);
 }
 
-.atalho__verbo { white-space: normal; word-break: break-word; }
+.atalho__verbo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
 .atalho__conta { margin-left: auto; color: var(--silver); }
 
 .atalho--aceso .atalho__link {
@@ -2087,6 +2087,7 @@
   /* ---- Propostas -------------------------------------------------------- */
   .atalhos__lista { gap: var(--space-6); }
   .atalho { flex: 0 1 auto; }
+  .atalho__verbo { font-size: inherit; }
   .grupo__cabeca { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--space-6); }
   .grupo__n { grid-column: 1 / span 3; margin-bottom: 0; padding-top: 0.6em; }
   .grupo__titulo { grid-column: 4 / -1; }
