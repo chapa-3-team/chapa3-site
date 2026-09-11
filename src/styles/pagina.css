@@ -270,13 +270,28 @@
   color: var(--void);
 }
 
-@media (max-width: 639px) {
+@media (max-width: 1080px) {
   /* O nome sai, o simbolo fica: os quatro publicos precisam caber sem
      rolagem lateral, porque a navegacao por publico E a arquitetura do site
      e um item cortado na borda nao e clicado. */
   .marca__nome { display: none; }
-  .cabecalho__link { padding-inline: var(--space-2); }
-  .cabecalho__grade { padding-inline: var(--space-3); gap: var(--space-2); }
+  .cabecalho__link { padding-inline: 4px; font-size: 11px; }
+  .cabecalho__grade { padding-inline: 8px; gap: 4px; }
+  .atalho__link { gap: 4px; padding-block: 4px; }
+  .atalho__verbo { font-size: 11px; }
+  .atalhos { padding-inline: 8px; }
+  .atalhos__lista { gap: 0; }
+}
+
+@media (max-width: 768px) {
+  /* HD e celulares pequenos */
+  .marca__simbolo { width: 24px; }
+  .cabecalho__link { padding-inline: 3px; font-size: 10px; }
+  .cabecalho__grade { padding-inline: 4px; gap: 3px; }
+  .atalho__link { gap: 3px; padding-block: 2px; min-height: 40px; }
+  .atalho__verbo { font-size: 10px; }
+  .atalho__conta { font-size: 10px; }
+  .atalhos { padding-inline: 4px; }
 }
 
 @media (min-width: 900px) {
@@ -1433,13 +1448,17 @@
   background: var(--void);
   border-block: var(--hairline) solid var(--line);
   margin-bottom: var(--space-7);
+  width: 100%;
+  padding-inline: var(--space-4);
+  box-sizing: border-box;
 }
 
 .atalhos__lista {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
   overflow-x: auto;
   scrollbar-width: none;
+  max-width: none;
 }
 
 .atalhos__lista::-webkit-scrollbar { display: none; }
