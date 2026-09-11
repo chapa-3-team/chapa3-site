@@ -219,12 +219,12 @@
 .marca__nome { color: var(--bone); white-space: nowrap; }
 .marca__mais { color: var(--ambar); }
 
-.cabecalho__nav { min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.cabecalho__nav::-webkit-scrollbar { display: none; }
+.cabecalho__nav { min-width: 0; }
 
 .cabecalho__lista {
   display: flex;
   gap: var(--space-1);
+  flex-wrap: wrap;
 }
 
 /* Alvo de toque de 44px sem depender do tamanho da letra. */
@@ -989,7 +989,7 @@
 .botao__rolo {
   position: relative;
   display: block;
-  height: 1em;
+  min-height: 1em;
   line-height: 1;
   overflow: clip;
 }
@@ -1470,7 +1470,7 @@
               border-color var(--motion-fast) var(--ease-default);
 }
 
-.atalho__verbo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.atalho__verbo { white-space: normal; word-break: break-word; }
 .atalho__conta { margin-left: auto; color: var(--silver); }
 
 .atalho--aceso .atalho__link {
